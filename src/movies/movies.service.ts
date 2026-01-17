@@ -1,68 +1,48 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Movie } from './movie.entity';
-import { Review } from './review.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CreateMovieDto } from './dto/create-movie.dto';
+import { UpdateMovieDto } from './dto/update-movie.dto';
 
 @Injectable()
 export class MoviesService {
   constructor(
     @InjectRepository(Movie)
     private readonly moviesRepo: Repository<Movie>,
-    @InjectRepository(Review)
-    private readonly reviewsRepo: Repository<Review>,
   ) {}
 
-  // Create a new movie
-  async createMovie(title: string, description: string, imageUrl?: string): Promise<Movie> {
-    const movie = this.moviesRepo.create({ title, description, imageUrl });
-    return this.moviesRepo.save(movie);
+  async findAll(): Promise<Movie[]> {
+    return this.moviesRepo.find({ relations: ['reviews'] });
   }
 
-  // Get all movies with reviews and average rating
-  async getMovies(): Promise<Movie[]> {
-    const movies = await this.moviesRepo.find({ relations: ['reviews'] });
-    return movies.map((movie) => {
-      const totalRating = movie.reviews.reduce((sum, r) => sum + r.rating, 0);
-      movie.averageRating = movie.reviews.length ? totalRating / movie.reviews.length : 0;
-      return movie;
-    });
-  }
-
-  // Get a single movie by ID
-  async getMovieById(id: number): Promise<Movie> {
+  async findOne(id: number): Promise<Movie> {
     const movie = await this.moviesRepo.findOne({ where: { id }, relations: ['reviews'] });
     if (!movie) throw new NotFoundException('Movie not found');
-    const totalRating = movie.reviews.reduce((sum, r) => sum + r.rating, 0);
-    movie.averageRating = movie.reviews.length ? totalRating / movie.reviews.length : 0;
     return movie;
   }
 
-  // Update movie
-  async updateMovie(id: number, body: { title?: string; description?: string; imageUrl?: string }): Promise<Movie> {
-    const movie = await this.moviesRepo.findOneBy({ id });
-    if (!movie) throw new NotFoundException('Movie not found');
+  async create(createDto: CreateMovieDto): Promise<Movie> {
+    const movie = this.moviesRepo.create(createDto);
+    return this.moviesRepo.save(movie);
+  }
 
-    movie.title = body.title ?? movie.title;
-    movie.description = body.description ?? movie.description;
-    movie.imageUrl = body.imageUrl ?? movie.imageUrl;
+  async update(id: number, updateDto: UpdateMovieDto): Promise<Movie> {
+    const movie = await this.findOne(id);
+
+    Object.assign(movie, updateDto);
+
+    // recalculate average rating if reviews exist
+    if (movie.reviews?.length) {
+      const total = movie.reviews.reduce((sum, r) => sum + r.rating, 0);
+      movie.averageRating = total / movie.reviews.length;
+    }
 
     return this.moviesRepo.save(movie);
   }
 
-  // Delete movie
-  async deleteMovie(id: number): Promise<{ message: string }> {
-    const result = await this.moviesRepo.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Movie not found');
-    return { message: 'Movie deleted successfully' };
-  }
-
-  // Add review to a movie
-  async addReview(movieId: number, reviewer: string, comment: string, rating: number): Promise<Review> {
-    const movie = await this.moviesRepo.findOneBy({ id: movieId });
-    if (!movie) throw new NotFoundException('Movie not found');
-
-    const review = this.reviewsRepo.create({ reviewer, comment, rating, movie });
-    return this.reviewsRepo.save(review);
+  async remove(id: number): Promise<Movie> {
+    const movie = await this.findOne(id);
+    return this.moviesRepo.remove(movie);
   }
 }

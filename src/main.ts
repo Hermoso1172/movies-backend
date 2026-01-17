@@ -1,16 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS for all origins (for development)
   app.enableCors({
-    origin: 'http://localhost:3001', // your frontend URL
+    origin: 'http://localhost:3001',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
+
+  app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
   const config = new DocumentBuilder()
     .addSecurity('bearer', {
