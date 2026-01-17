@@ -1,8 +1,19 @@
-import { Controller, Post, Body, NotFoundException, Get, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  NotFoundException,
+  Get,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
 import { Movie } from './movie.entity';
+import { ApiResponse } from '@nestjs/swagger';
+import { GetReviewDto } from './dto/get-review.dto';
 
 @Controller('review')
 export class ReviewController {
@@ -14,6 +25,11 @@ export class ReviewController {
     private movieRepo: Repository<Movie>,
   ) {}
 
+  @ApiResponse({
+    status: 201,
+    type: GetReviewDto,
+    description: 'Create a new review',
+  })
   @Post()
   async createReview(@Body() body: any) {
     const { rating, comment, reviewer, movieID } = body;
@@ -36,6 +52,11 @@ export class ReviewController {
     return this.reviewRepo.save(review);
   }
 
+  @ApiResponse({
+    status: 200,
+    type: [GetReviewDto],
+    description: 'Get reviews by movie ID',
+  })
   @Get('movie/:id')
   async getReviewsByMovie(@Param('id') id: number) {
     return this.reviewRepo.find({
@@ -45,6 +66,11 @@ export class ReviewController {
     });
   }
 
+  @ApiResponse({
+    status: 200,
+    type: GetReviewDto,
+    description: 'Update a review',
+  })
   @Put(':id')
   async updateReview(@Param('id') id: number, @Body() body: any) {
     const review = await this.reviewRepo.findOne({
@@ -62,6 +88,10 @@ export class ReviewController {
     return this.reviewRepo.save(review);
   }
 
+  @ApiResponse({
+    status: 200,
+    description: 'Delete a review',
+  })
   @Delete(':id')
   async deleteReview(@Param('id') id: number) {
     const review = await this.reviewRepo.findOne({ where: { id } });
