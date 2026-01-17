@@ -9,15 +9,14 @@ export class Movie {
   @Column()
   title: string;
 
-  @Column()
-  description: string;
+  @Column({ type: 'text', nullable: true }) // store image as Base64
+  imageData?: string;
 
-  // New column for image URL
-  @Column({ nullable: true })
-  imageUrl: string;
+  @Column({ type: 'text', nullable: true }) // <-- add this line
+  description?: string;
 
-  @OneToMany(() => Review, (review) => review.movie, { cascade: true })
-  reviews: Review[];
+  @OneToMany(() => Review, (review) => review.movie)
+  reviews?: Review[];
 
   averageRating?: number;
 }

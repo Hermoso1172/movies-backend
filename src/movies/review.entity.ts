@@ -7,13 +7,13 @@ export class Review {
   id: number;
 
   @Column()
-  reviewer: string;
+  rating: number; // must match the field you assign in .create()
 
-  @Column()
-  comment: string;
+  @Column({ nullable: true })
+  reviewer?: string; // must match the field you assign
 
-  @Column('int')
-  rating: number;
+  @Column({ nullable: true })
+  comment?: string;
 
   @ManyToOne(() => Movie, (movie) => movie.reviews, { onDelete: 'CASCADE' })
   movie: Movie;
