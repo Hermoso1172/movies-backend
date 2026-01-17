@@ -9,10 +9,10 @@ export class Movie {
   @Column()
   title: string;
 
-  @Column({ type: 'text', nullable: true }) // store image as Base64
+  @Column({ type: 'longtext', nullable: true }) // store image as Base64
   imageData?: string;
 
-  @Column({ type: 'text', nullable: true }) // <-- add this line
+  @Column({ type: 'longtext', nullable: true }) // <-- add this line
   description?: string;
 
   @OneToMany(() => Review, (review) => review.movie)
